@@ -1,0 +1,142 @@
+## creating an experiment that can work with another online software 
+
+import numpy as np
+import random
+import pandas as pd
+import itertools 
+import xlrd
+from itertools import combinations, permutations
+
+Repetition_Condition = [] 
+Block_Number=[]
+OrderIndex=['1','2' ,'3', '4']
+Num_of_Blocks=10
+Show_feedback_for=1000
+TIME_INTERAVL_BETWEEN_BITS=800
+Time_for_each_bit=150
+Wait_time_after_bit=TIME_INTERAVL_BETWEEN_BITS-Time_for_each_bit
+window_interval_to_GO=500
+Time_between_last_bit_to_start_WINDOW= TIME_INTERAVL_BETWEEN_BITS-window_interval_to_GO-Time_for_each_bit
+Fixation_duration=1000
+If_no_response_after_TIME=3000
+
+permut = permutations(OrderIndex)
+Num_Trials_per_block=6*4
+Experimental_Condition=[]
+Frequency_Condition=[]
+Preparation_Condition=[]
+Experimental_Condition=[]
+Preparation_Condition=[]
+Fixation_time=[]
+window_interval_GO=[]
+If_no_response_after=[]
+Variable_Time_between_last_bit_to_start_WINDOW=[]
+
+cleanOrderIndex=[]
+for sublist in permut:
+    if sublist not in cleanOrderIndex:
+        cleanOrderIndex.append(sublist)
+
+OrderList=random.sample(cleanOrderIndex,len(cleanOrderIndex))
+
+# choose randomly sets for each condition
+LowFreq_Short_Prep=random.sample(OrderList,6)
+changing_list=[x for x in OrderList if x not in LowFreq_Short_Prep]
+LowFreq_Long_Prep=random.sample(changing_list,6)
+changing_list=[x for x in changing_list if x not in LowFreq_Long_Prep]
+
+HighFreq_Short_Prep=random.sample(changing_list,2)
+HighFreq_Short_Prep=HighFreq_Short_Prep*3
+changing_list=[x for x in changing_list if x not in HighFreq_Short_Prep]
+HighFreq_Long_Prep=random.sample(changing_list,2)
+changing_list=[x for x in changing_list if x not in HighFreq_Long_Prep]
+HighFreq_Long_Prep=HighFreq_Long_Prep*3
+
+Four_ConditionsList=LowFreq_Short_Prep+LowFreq_Long_Prep+HighFreq_Short_Prep+HighFreq_Long_Prep
+
+# practice is different seq than exp
+Practice_list=random.sample(changing_list,8)
+Finallist=Practice_list*2 
+
+Block_Number.extend([1]*8)
+Block_Number.extend([2]*8)
+Experimental_Condition.extend(['Practice']*16)
+Frequency_Condition.extend(['Practice']*16)
+Preparation_Condition.extend(['Practice']*16)
+
+print (len(Finallist))
+# CREATING FILE
+for B in range (1,Num_of_Blocks+1):
+    Finallist.extend(Four_ConditionsList)
+    Block_Number.extend([B+2]*Num_Trials_per_block)
+    Experimental_Condition.extend(['LowFreq Short Prep']*6)
+    Experimental_Condition.extend(['LowFreq Long Prep']*6)
+    Experimental_Condition.extend(['HighFreq Short Prep']*6)
+    Experimental_Condition.extend(['HighFreq Long Prep']*6)
+    Frequency_Condition.extend(['Low Freq']*12)
+    Frequency_Condition.extend(['High Freq']*12)
+    Preparation_Condition.extend(['Short Prep']*6)
+    Preparation_Condition.extend(['Long Prep']*6)
+    Preparation_Condition.extend(['Short Prep']*6)
+    Preparation_Condition.extend(['Long Prep']*6)
+    
+CorrectPressindex1=[x[0] for x in Finallist]
+button1=['<p><font size="7" color=black>' + str(x) + '</font></p>' for x in CorrectPressindex1]
+CorrectPressindex2=[x[1] for x in Finallist]
+button2=['<p><font size="7" color=black>' + str(x) + '</font></p>' for x in CorrectPressindex2]
+CorrectPressindex3=[x[2] for x in Finallist]
+button3=['<p><font size="7" color=black>' + str(x) + '</font></p>' for x in CorrectPressindex3]
+CorrectPressindex4=[x[3] for x in Finallist]
+button4=['<p><font size="7" color=black>' + str(x) + '</font></p>' for x in CorrectPressindex4]
+
+Show_feedback_for=[Show_feedback_for]*(len(Experimental_Condition))
+Wait_time_after_bit=[Wait_time_after_bit]*(len(Experimental_Condition))
+Time_for_each_bit=[Time_for_each_bit]*(len(Experimental_Condition))
+Fixation_time=[Fixation_duration]*(len(Experimental_Condition))
+window_interval_GO=[window_interval_to_GO]*(len(Experimental_Condition))
+If_no_response_after=[If_no_response_after_TIME]*(len(Experimental_Condition))
+Variable_Time_between_last_bit_to_start_WINDOW=[Time_between_last_bit_to_start_WINDOW]*(len(Experimental_Condition))
+
+Data={'display':Preparation_Condition,'randomise_trials':Block_Number, 'Experimental Condition':Experimental_Condition, 'Frequency Condition':Frequency_Condition, 'Preparation Condition':Preparation_Condition, 'Finallist':Finallist,'button1':button1,'button2':button2,
+      'button3':button3,'button4':button4, 'CorrectPressindex1':CorrectPressindex1,'CorrectPressindex2':CorrectPressindex2, 'CorrectPressindex3':CorrectPressindex3,
+     'CorrectPressindex4':CorrectPressindex4, 'Block Number':Block_Number, 
+      'Show_feedback_for':Show_feedback_for,'Wait_time_after_bit':Wait_time_after_bit, 'Variable_Time_between_last_bit_to_start_WINDOW':Variable_Time_between_last_bit_to_start_WINDOW,
+      'Time_for_each_bit':Time_for_each_bit, 'Fixation_time':Fixation_time, 'window_interval_GO':window_interval_GO,'If_no_response_after':If_no_response_after }
+dfFinal = pd.DataFrame (Data)
+
+def Insert_row_(row_number, df, row_values): 
+    # Slice the upper half of the dataframe 
+    df1 = df[0:row_number] 
+    df2 = df[row_number:] 
+    df1.loc[row_number]=row_values 
+    df_result = pd.concat([df1, df2]) 
+    df_result.index = [*range(df_result.shape[0])] 
+    return df_result 
+
+empty=[""]
+dfFinal=dfFinal.append(empty)
+newrow=dfFinal.iloc[-1]
+dfFinal=Insert_row_(0, dfFinal, newrow)
+dfFinal=Insert_row_(9, dfFinal, newrow)
+dfFinal=Insert_row_(16+2, dfFinal, newrow)
+dfFinal=Insert_row_(67, dfFinal, newrow)
+dfFinal=Insert_row_(int(4*Num_Trials_per_block +4+16), dfFinal, newrow)
+dfFinal=Insert_row_(int(7*Num_Trials_per_block+5+16), dfFinal, newrow)
+#dfFinal=Insert_row_(int(Num_of_Blocks*Num_Trials_per_block*0.75+5+16), dfFinal, newrow)
+
+dfFinal.display[0]='instructions motor'
+dfFinal.display[1:9]='Long Practice'
+dfFinal.display[9]='instructions after long practice'
+dfFinal.display[10:18]='Short Practice'
+dfFinal.display[16+2]='instructions after practice'
+dfFinal.display[67]='attention_check'
+dfFinal.display[int(4*Num_Trials_per_block+4+16)]='block'
+dfFinal.display[int(7*Num_Trials_per_block+5+16)]='block'
+#dfFinal.display[int(Num_of_Blocks*Num_Trials_per_block*0.75+6+16)]='block'
+dfFinal.display[Num_of_Blocks*Num_Trials_per_block+6+16]='debrief'
+
+## save to xlsx file
+filepath = 'Preparation Sequantial Motor Learning Task_v4.xlsx'
+dfFinal.to_excel(filepath, index=True)
+
+              
