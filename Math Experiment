@@ -1,0 +1,149 @@
+# Math Experiment Sum manipulation and Complexity manipulation
+
+import numpy as np
+import random
+import pandas as pd
+import itertools 
+import xlrd
+
+numbers_of_digitsComplex=3
+numbers_of_digitsSimple=2
+Num_of_Blocks=18
+Num_Trials_per_blockpercondition=4
+Num_Trials_per_block=16
+Real_Sum=[]
+Distance_condition=[]
+Absolute_Distance_condition=[]
+Correctness_condition=[]
+Block_Number=[]
+Experimental_Condition=[]
+
+# creating two arrays: one for 2 digits and one for 3 digits
+arraay_of_numbersComplex= [random.sample(range(1,10),numbers_of_digitsComplex)]
+for i in range(1,504):
+    numbersComplex=random.sample(range(1,10), numbers_of_digitsComplex)
+    while numbersComplex in arraay_of_numbersComplex:
+        numbersComplex=random.sample(range(1,10), numbers_of_digitsComplex)
+    arraay_of_numbersComplex.append(numbersComplex) 
+    
+arraay_of_numbersSimple= [random.sample(range(1,10),numbers_of_digitsSimple)]
+for i in range(1,72):
+    numbersSimple=random.sample(range(1,10), numbers_of_digitsSimple)
+    while numbersSimple in arraay_of_numbersSimple:
+        numbersSimple=random.sample(range(1,10), numbers_of_digitsSimple)
+    arraay_of_numbersSimple.append(numbersSimple)
+
+numberofuniqueleftside=36
+arraay_of_ComplexLowSums=[x for x in arraay_of_numbersComplex if sum(x)<12]
+arraay_of_ComplexLowSums=arraay_of_ComplexLowSums[:numberofuniqueleftside]
+
+arraay_of_ComplexHighSums=[x for x in arraay_of_numbersComplex if sum(x)>=12 and sum(x)<=17]
+arraay_of_ComplexHighSums=arraay_of_ComplexHighSums[:numberofuniqueleftside]
+
+# 10 is included in both low and high sums of the simple lists (4 equations in each)
+arraay_of_Simple_10_Sums=[x for x in arraay_of_numbersSimple if sum(x)==10]
+
+arraay_of_SimpleLowSums=[x for x in arraay_of_numbersSimple if sum(x)<10]
+arraay_of_SimpleLowSums.extend(arraay_of_Simple_10_Sums[:4])
+
+arraay_of_SimpleHighSums=[x for x in arraay_of_numbersSimple if sum(x)>=11 and sum(x)<=17]
+arraay_of_SimpleHighSums.extend(arraay_of_Simple_10_Sums[4:])
+
+listofEquations=[]
+# random alocation of the equations in each block
+distancefromcorrect=[0,3,0,-3]*9
+distancefromcorrect.extend([3,0,-3,0]*9)
+Distance_Condition=[]
+Sums=[]
+
+randomequations=random.sample(range(0,len(arraay_of_ComplexLowSums)),len(arraay_of_ComplexLowSums))
+distance=0
+
+for z in range(2):
+    for k in randomequations  :
+        listofEquations.append("+".join(str(i) for i in arraay_of_ComplexLowSums[k]) + "=" + str(sum(arraay_of_ComplexLowSums[k])+distancefromcorrect[distance]))
+        Experimental_Condition.append('Complex-Low Sum')
+        Real_Sum.append(sum(arraay_of_ComplexLowSums[k]))
+        Correctness_condition.append(distancefromcorrect[distance]==0)
+        Distance_Condition.append(distancefromcorrect[distance])
+        Sums.append(sum(arraay_of_ComplexLowSums[k]))
+
+        listofEquations.append("+".join(str(i) for i in arraay_of_ComplexHighSums[k]) + "=" + str(sum(arraay_of_ComplexHighSums[k])+distancefromcorrect[distance]))
+        Experimental_Condition.append('Complex-High Sum')
+        Real_Sum.append(sum(arraay_of_ComplexHighSums[k]))
+        Correctness_condition.append(distancefromcorrect[distance]==0)
+        Distance_Condition.append(distancefromcorrect[distance])
+        Sums.append(sum(arraay_of_ComplexHighSums[k]))
+
+        listofEquations.append("+".join(str(i) for i in arraay_of_SimpleLowSums[k]) + "=" + str(sum(arraay_of_SimpleLowSums[k])+distancefromcorrect[distance]))
+        Experimental_Condition.append('Simple-Low Sum')
+        Real_Sum.append(sum(arraay_of_SimpleLowSums[k]))
+        Correctness_condition.append(distancefromcorrect[distance]==0)
+        Distance_Condition.append(distancefromcorrect[distance])
+        Sums.append(sum(arraay_of_SimpleLowSums[k]))
+
+        listofEquations.append("+".join(str(i) for i in arraay_of_SimpleHighSums[k]) + "=" + str(sum(arraay_of_SimpleHighSums[k])+distancefromcorrect[distance]))
+        Experimental_Condition.append('Simple-High Sum')
+        Real_Sum.append(sum(arraay_of_SimpleHighSums[k]))
+        Correctness_condition.append(distancefromcorrect[distance]==0)
+        Distance_Condition.append(distancefromcorrect[distance])
+        Sums.append(sum(arraay_of_SimpleHighSums[k]))
+        
+        distance+=1
+
+Data={    '# Equations':listofEquations,'Experimental Condition': Experimental_Condition, 
+      'EquationsClean':listofEquations, 'Sum':Sums , 'Distance Condition':Distance_Condition, 'Correctness_condition': Correctness_condition }
+
+df = pd.DataFrame (Data)
+df['# Equations']=['<p><font size="7" color="black">' + str(x) + '</font></p>' for x in df['# Equations'] ]
+
+# repeat all the equations for second time
+df=pd.concat([df,df])
+
+for i in range (1,37):
+    for j in range (1,17):
+        Block_Number.append(i)
+
+
+print(len(df['Experimental Condition']))
+print(len(Block_Number))
+df.insert(4, 'randomise_trials', Block_Number, True) 
+df.insert(5, 'Block Number', Block_Number, True) 
+
+
+def Insert_row_(row_number, df, row_values): 
+    # Slice the upper half of the dataframe 
+    df1 = df[0:row_number] 
+    df2 = df[row_number:] 
+    df1.loc[row_number]=row_values 
+    df_result = pd.concat([df1, df2]) 
+    df_result.index = [*range(df_result.shape[0])] 
+    return df_result 
+
+empty=[""]
+dfFinal=df.append(empty)
+newrow=dfFinal.iloc[-1]
+
+dfFinal=Insert_row_(0, dfFinal, newrow)
+dfFinal=Insert_row_(int(len(Block_Number)/4) + 1, dfFinal, newrow)
+dfFinal=Insert_row_(242, dfFinal, newrow)
+dfFinal=Insert_row_(int(len(Block_Number)*.5) + 3, dfFinal, newrow)
+dfFinal=Insert_row_(int(len(Block_Number)*.75) + 4, dfFinal, newrow)                                   
+                    
+display=['test']*(576+6)
+display[0]='instructions'
+display[int(len(Block_Number)/4) + 1]='block'
+display[242]='attention_check'
+display[int(len(Block_Number)*.5) + 3]='block'
+display[int(len(Block_Number)*.75) + 4]='block'
+display[int(len(Block_Number)) + 5]='debrief'
+
+print(len(display))
+print(len(dfFinal['Block Number']))
+
+dfFinal.insert(3, "display", display, True) 
+
+## save to xlsx file                    
+filepath = 'Math_Learning_Exp2_for gorilla_10.xlsx'
+dfFinal.to_excel(filepath, index=False)
+
